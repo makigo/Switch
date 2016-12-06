@@ -1,0 +1,84 @@
+#!/bin/bash -e
+#
+# Switch script for rtl-tcp and openwebrx
+#
+# Author: iMakhonin [04.12.2016]
+#
+###
+
+DAEMON=switch
+
+
+service_query() {
+  web_status=`service openwebrx status | cut -d " " -f5`
+  rtl_status=`service rtl-tcp status | cut -d " " -f5`
+}
+
+do_status() {
+  service_query
+
+  if [ $web_status = "not" ] && [ $rtl_status = "not" ]; then
+    web_status="OFF"
+    rtl_status="OFF"
+    web_switch="   "
+    rtl_switch="   "
+  fi
+
+  if [ $web_status = "not" ]; then
+    web_status="OFF"
+    web_switch="   "
+    rtl_switch="==>"
+  fi
+
+  if [ $rtl_status = "not" ]; then
+    rtl_status="OFF"
+    rtl_switch="   "
+    web_switch="==>"
+  fi
+
+  echo -e "*** SDR Services status"
+  echo -e "    --------------------"
+  echo -e "$rtl_switch RTL-TCP is $rtl_status"
+  echo -e "$web_switch OPENWEBRX is $web_status"
+}
+
+do_web() {
+  service_query
+
+  if [ $web_status = "running" ]; then
+    echo -e "Relax! OpenWebRX is $web_status"
+  else
+    service rtl-tcp stop
+    sleep 3
+    service openwebrx start
+  fi
+}
+
+do_rtl() {
+  service_query
+
+  if [ $rtl_status = "running" ]; then
+    echo -e "Relax! RTL-TCP is $rtl_status"
+  else
+    service openwebrx stop
+    sleep 3
+    service rtl-tcp start
+  fi
+}
+
+
+
+# See how we were called.
+case "$1" in
+
+  web|rtl|status)
+    do_${1}
+  ;;
+
+  *)
+    echo "Usage: service $DAEMON {web|rtl|status}"
+    exit 1
+  ;;
+
+esac
+exit 0
