@@ -2,9 +2,10 @@
 #
 # Switch script for rtl-tcp and openwebrx
 #
-# Author: iMakhonin [04.12.2016]
+# Author: iMakhonin aka Makigo [04.12.2016]
+# Email: work.makhonon@gmail.com
 #
-###
+
 
 DAEMON=switch
 
