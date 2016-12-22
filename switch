@@ -2,7 +2,7 @@
 #
 # Switch script for rtl-tcp and openwebrx
 #
-# Author: iMakhonin aka Makigo [15.12.2016]
+# Author: iMakhonin aka Makigo
 # Email: work.makhonin@gmail.com
 #
 ###
@@ -11,17 +11,26 @@ set -e
 
 NAME=Switch
 APPNAME=switch
-VERSION=0.3
-RELEASE=15.12.2016
+VERSION=0.4.1
+RELEASE=18.12.2016
 EMAIL=work.makhonin@gmail.com
 DATE=`date +%d/%m`
 
 sr_web="openwebrx"                                                    # Name of Service 1
 sr_rtl="rtl-tcp"                                                      # Name of Service 2
-info_1=" * Service OpenWebRX is running"                              # Info message for Service 1
-info_2=" * Service RTL-TCP is running"                                # Info message for Service 2
+usage="Usage command:"                                                # Message Usage
+info_1=" * Service \"$sr_web\" is running"                            # Info message for Service 1
+info_2=" * Service \"$sr_rtl\" is running"                            # Info message for Service 2
 info_3=" * SDR services \"$sr_web\" and \"$sr_rtl\" is not running"   # Info message for Not running both services
+info_4=" * Service \"$sr_web\" is not running"                        # Info message for Not running WEB service
+info_5=" * Service \"$sr_rtl\" is not running"                        # Info message for Not running RTL service
 pause=2                                                               # Delay between stop and start service (sec.)
+
+key_w="-w"
+key_r="-r"
+key_o="-o"
+key_s="-s"
+key_h="-h, --help"
 
 
 ### Functions ###
@@ -32,65 +41,65 @@ service_query() {
 
 
 ### Command HELP ###
-if [ "$1" == "-h"  ] || [ "$1" == "--help"  ] && [ -z "$2" ];then
+if [ "$1" == "-h"  ] || [ "$1" == "--help"  ] && [ -z "$2" ]; then
   echo "$NAME v$VERSION, application for switch between services openwebrx and rtl-tcp."
-  echo "Usage: $APPNAME [KEY]... "
+  echo "Usage: $APPNAME [KEY]... [COMMAND]... "
   echo
-  echo "  -w,  --web         Switch to \"$sr_web\" or just start."
-  echo "  -r,  --rtl         Switch to \"$sr_rtl\" or just start."
-  echo "  -o,  --off         OFF both services \"$sr_web\" and \"$sr_rtl\"."
-  echo "  -s,  --status      Status of active service."
+  echo "  -w,  --web [restart|stop]    Switch to \"$sr_web\" or just start."
+  echo "  -r,  --rtl [restart|stop]    Switch to \"$sr_rtl\" or just start."
+  echo "  -o,  --off                   OFF both services \"$sr_web\" and \"$sr_rtl\"."
+  echo "  -s,  --status                Status of active service."
   echo
-  echo "  -h,  --help        Print Help information and exit."
-  echo "  -v,  --version     Print Version information and exit."
+  echo "  -h,  --help       Show Help information and exit."
+  echo "  -v,  --version    Show Version information and exit."
   echo
-  echo "Of all the error in «$APPNAME» write to <$EMAIL>"
+  echo "About all errors in «$APPNAME» write to <$EMAIL>"
   exit 1
 ###
 
 ### Command VERSION ###
-elif [ "$1" == "-v"  ] || [ "$1" == "--version"  ] && [ -z "$2" ];then
+elif [ "$1" == "-v"  ] || [ "$1" == "--version"  ] && [ -z "$2" ]; then
   echo "Version: $VERSION, Release: $RELEASE"
   exit 1
 ###
 
 # Command STATUS ###
-elif [ "$1" == "-s"  ] || [ "$1" == "--status"  ] && [ -z "$2" ];then
+elif [ "$1" == "-s"  ] || [ "$1" == "--status"  ] && [ -z "$2" ]; then
   service_query
 
-  if [ $web_status = "not" ] && [ $rtl_status = "not" ];then
+  if [ $web_status = "not" ] && [ $rtl_status = "not" ]; then
     web_status="OFF"
     rtl_status="OFF"
     web_switch="   "
     rtl_switch="   "
   fi
 
-  if [ $web_status = "not" ];then
+  if [ $web_status = "not" ]; then
     web_status="OFF"
     web_switch="   "
     rtl_switch="==>"
   fi
 
-  if [ $rtl_status = "not" ];then
+  if [ $rtl_status = "not" ]; then
     rtl_status="OFF"
     rtl_switch="   "
     web_switch="==>"
   fi
 
-  echo -e "    SDR Services status"
+  echo -e "    Services status"
   echo -e "    --------------------"
-  echo -e "$rtl_switch RTL-TCP is $rtl_status"
-  echo -e "$web_switch OPENWEBRX is $web_status"
+  echo -e "$rtl_switch $sr_rtl is $rtl_status"
+  echo -e "$web_switch $sr_web is $web_status"
 ###
 
 ### Command switch to OPENWEBRX ###
-elif [ "$1" == "-o"  ] || [ "$1" == "--web"  ] && [ -z "$2" ];then
+elif [ "$1" == "-w"  ] || [ "$1" == "--web"  ] && [ -z "$2" ]; then
   service_query
 
-  if [ $web_status = "running" ];then
+  if [ $web_status = "running" ]; then
     echo -e "$info_1"
   else
-    if [ $rtl_status = "running" ];then
+    if [ $rtl_status = "running" ]; then
       service $sr_rtl stop
       sleep $pause
       service $sr_web start
@@ -98,16 +107,31 @@ elif [ "$1" == "-o"  ] || [ "$1" == "--web"  ] && [ -z "$2" ];then
       service $sr_web start
     fi
   fi
+
+elif [ "$1" == "-w"  ] || [ "$1" == "--web"  ] && [ ! -z "$2" ]; then
+  service_query
+
+  if [ $web_status = "running" ]; then
+    if [ "$2" == "stop" ]; then
+      service $sr_web stop
+    elif [ "$2" == "restart" ]; then
+      service $sr_web restart
+    else
+      echo "$usage $APPNAME $key_w [restart|stop]"
+    fi
+  else
+    echo "$info_4"
+  fi
 ###
 
 ### Command switch to RTL-TCP ###
-elif [ "$1" == "-r"  ] || [ "$1" == "--rtl"  ] && [ -z "$2" ];then
+elif [ "$1" == "-r" ] || [ "$1" == "--rtl"  ] && [ -z "$2" ]; then
   service_query
 
-  if [ $rtl_status = "running" ];then
+  if [ $rtl_status = "running" ]; then
     echo -e "$info_2"
   else
-    if [ $web_status = "running" ];then
+    if [ $web_status = "running" ]; then
       service $sr_web stop
       sleep $pause
       service $sr_rtl start
@@ -115,15 +139,30 @@ elif [ "$1" == "-r"  ] || [ "$1" == "--rtl"  ] && [ -z "$2" ];then
       service $sr_rtl start
     fi
   fi
+
+elif [ "$1" == "-r"  ] || [ "$1" == "--rtl"  ] && [ ! -z "$2" ]; then
+  service_query
+
+  if [ $rtl_status = "running" ]; then
+    if [ "$2" == "stop" ]; then
+      service $sr_rtl stop
+    elif [ "$2" == "restart" ]; then
+      service $sr_rtl restart
+    else
+      echo "$usage $APPNAME $key_r [restart|stop]"
+    fi
+  else
+    echo "$info_5"
+  fi
 ###
 
 ### Command OFF both services ###
-elif [ "$1" == "-o"  ] || [ "$1" == "--off"  ] && [ -z "$2" ];then
+elif [ "$1" == "-o"  ] || [ "$1" == "--off"  ] && [ -z "$2" ]; then
   service_query
 
-  if [ $rtl_status = "running" ];then
+  if [ $rtl_status = "running" ]; then
     service $sr_rtl stop
-  elif [ $web_status = "running" ];then
+  elif [ $web_status = "running" ]; then
     service $sr_web stop
   else
     echo -e "$info_3"
@@ -131,9 +170,8 @@ elif [ "$1" == "-o"  ] || [ "$1" == "--off"  ] && [ -z "$2" ];then
 ###
 
 else
-    echo "Usage command: --help"
+    echo "$usage $key_h"
     exit 1
-
 fi
 
 exit 0
