@@ -1,7 +1,6 @@
 # Switch
 Switch script between service openwebrx and rtl-tcp
 
-    Switch v0.4.1, application for switch between services openwebrx and rtl-tcp.
     Usage: switch [KEY]... [COMMAND]... 
 
       -w,  --web [restart|stop]    Switch to "openwebrx" or just start.
